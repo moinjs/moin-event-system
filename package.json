@@ -1,0 +1,22 @@
+{
+  "name": "moin-event-system",
+  "description": "Event System for the Moin application server",
+  "keywords": [
+    "events",
+    "moin"
+  ],
+  "author": "Torben Hartmann",
+  "homapage": "http://moinjs.github.io/",
+  "license": "MIT",
+  "repository": "moinjs/moin-event-system",
+  "engines": {
+    "node": ">=6.0"
+  },
+  "version": "1.0.0",
+  "moin": {
+    "type": "module"
+  },
+  "dependencies": {
+    "hat": "0.0.3"
+  }
+}
