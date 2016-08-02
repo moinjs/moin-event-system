@@ -43,8 +43,14 @@ module.exports = function (moin) {
     }
 
 
-    function getHandler(event) {
+    function getHandler(event, count = false) {
+
         let handlers = new Set(_handlerSet);
+        let _count = new Map();
+
+        if (count) {
+            handlers.forEach((id)=>_count.set(id, 0));
+        }
 
         function filterProperty(field, value) {
             //Check these Candidates. Ever ID that remains in this list, should be filtered out
@@ -62,6 +68,7 @@ module.exports = function (moin) {
                 if (_fieldFilter[field]._dynamic.hasOwnProperty(handlerId)) {
                     if (_fieldFilter[field]._dynamic[handlerId](value)) {
                         toCheck.delete(handlerId);
+                        if (count)_count.set(handlerId, _count.get(handlerId) + 1);
                     }
                 }
             });
@@ -70,6 +77,7 @@ module.exports = function (moin) {
             if (_fieldFilter[field]._static.hasOwnProperty(value)) {
                 _fieldFilter[field]._static[value].forEach(function (handlerId) {
                     toCheck.delete(handlerId);
+                    if (count)_count.set(handlerId, _count.get(handlerId) + 1);
                 });
             }
 
@@ -77,6 +85,7 @@ module.exports = function (moin) {
             //remove the remaining candidates from handler list
             toCheck.forEach(function (handlerId) {
                 handlers.delete(handlerId);
+                if (count)_count.delete(handlerId);
             });
         }
 
@@ -85,7 +94,7 @@ module.exports = function (moin) {
             var field = _filterOrder[i].field;
             filterProperty(field, event[field]);
         }
-        return handlers;
+        return count ? _count : handlers;
     }
 
 
@@ -226,6 +235,37 @@ module.exports = function (moin) {
                     values, errors, stats
                 };
             });
+        });
+        handler.addApi("act", function (eventName, data = {}) {
+            //Todo: Better way to get a copy of the data
+            let filter = JSON.parse(JSON.stringify(data));
+            filter.event = eventName;
+
+            let handler = getHandler(filter, true);
+            if (handler.length == 0) {
+                return Promise.resolve({
+                    error: "No Handler"
+                });
+            }
+
+            let max = 0;
+            let maxId = 0;
+            handler.forEach((count, fnc)=> {
+                if (count > max)maxId = fnc;
+            });
+
+            return new Promise((resolve, reject)=> {
+                try {
+                    resolve(_callbacks[maxId](filter));
+                } catch (e) {
+                    reject(e);
+                }
+            })
+                .then((value)=> {
+                    return {value};
+                }, (error)=> {
+                    return {error};
+                });
         });
     });
 };
