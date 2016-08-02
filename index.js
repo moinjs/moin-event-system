@@ -104,11 +104,11 @@ module.exports = function (moin) {
             delete _callbacks[handlerId];
             filter.forEach(({field,type,value})=> {
                 switch (type) {
-                    case "static":
+                    case "dynamic":
                         delete _fieldFilter[field]._dynamic[handlerId];
                         _fieldFilter[field]._dynamicCount--;
                         break;
-                    case "dynamic":
+                    case "static":
                         _fieldFilter[field]._static[value].delete(handlerId);
                         break;
                 }
